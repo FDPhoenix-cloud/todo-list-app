@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        {% if task.completed %}
+                            <i class="fas fa-check-circle"></i> {{ task.title }}
+                        {% else %}
+                            <i class="fas fa-tasks"></i> {{ task.title }}
+                        {% endif %}
+                    </h2>
+                    <div>
+                        {% if task.priority == 'high' %}
+                            <span class="badge bg-danger">🔴 Высокий</span>
+                        {% elif task.priority == 'medium' %}
+                            <span class="badge bg-warning">🟡 Средний</span>
+                        {% else %}
+                            <span class="badge bg-success">🟢 Низкий</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-5">
+                <!-- Описание -->
+                {% if task.description %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-file-alt"></i> Описание</h5>
+                        <p>{{ task.description }}</p>
+                    </div>
+                {% endif %}
+
+                <!-- Информация -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Статус:</strong> 
+                            {% if task.completed %}
+                                <span class="badge bg-success">✓ Завершена</span>
+                            {% else %}
+                                <span class="badge bg-warning">⏳ Активна</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Создана:</strong> {{ task.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                    </div>
+                </div>
+
+                <!-- Действия -->
+                <div class="d-flex gap-2 flex-wrap">
+                    <form method="POST" action="{{ url_for('tasks.toggle_task', task_id=task.id) }}" style="display:inline;">
+                        {% if task.completed %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-redo"></i> Вернуть в активные
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Отметить как завершено
+                            </button>
+                        {% endif %}
+                    </form>
+
+                    <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </a>
+
+                    <a href="{{ url_for('tasks.share_task', task_id=task.id) }}" class="btn btn-outline-info">
+                        <i class="fas fa-share"></i> Поделиться
+                    </a>
+
+                    <form method="POST" action="{{ url_for('tasks.delete_task', task_id=task.id) }}" 
+                          style="display:inline;" onsubmit="return confirm('Удалить задачу?');">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                    </form>
+
+                    <a href="{{ url_for('tasks.task_list') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </a>
+                </div>
+
+                <!-- Ссылка для общего доступа -->
+                {% if task.shared_task %}
+                    <hr>
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-link"></i> Эта задача общая</h6>
+                        <p class="mb-2">
+                            Токен: <code>{{ task.shared_task.token }}</code>
+                        </p>
+                        <p class="mb-0">
+                            Ссылка: <code>{{ url_for('shared.view_shared_task', token=task.shared_task.token, _external=True) }}</code>
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
