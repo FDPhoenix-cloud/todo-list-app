@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Страница не найдена{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1">404</h1>
+    <h2>Страница не найдена</h2>
+    <p class="text-muted">Похоже, эта страница была удалена или не существует.</p>
+    <a href="{{ url_for('tasks.task_list') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-arrow-left"></i> Вернуться к задачам
+    </a>
+</div>
+{% endblock %}

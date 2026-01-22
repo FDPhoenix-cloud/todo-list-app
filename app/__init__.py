@@ -2,48 +2,47 @@
 Инициализация Flask приложения (Application Factory Pattern)
 """
 import os
-from flask import Flask
-from app.extensions import db, login_manager
+from flask import Flask, redirect, url_for
+
 from app.config import config
+from app.extensions import db, login_manager
 
 
 def create_app(config_name=None):
-    """
-    Создает и конфигурирует Flask приложение
-    
-    Args:
-        config_name: Тип конфигурации ('development', 'testing', 'production')
-    
-    Returns:
-        Сконфигурированное Flask приложение
-    """
+    """Создает и конфигурирует Flask приложение"""
     
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'development')
     
     app = Flask(__name__)
-    
-    # Загрузи конфигурацию
     app.config.from_object(config[config_name])
     
-    # Инициализируй расширения с приложением
+        # Инициализируй расширения
     db.init_app(app)
-    login_manager.init_app(app)
     
-    # Импортируй модели (ДО создания таблиц!)
+    # Инициализируй LoginManager
+    from flask_login import LoginManager
+    global login_manager
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = '⚠️ Пожалуйста, залогинься'
+    login_manager.login_message_category = 'warning'
+    login_manager.init_app(app)
+
+    
+    # Импортируй модели
     from app.models import User, Task, SharedTask
     
-    # Регистрируй пользователей для login_manager
+    # Регистрируй user_loader
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
     
-    # Создай контекст приложения
     with app.app_context():
-        # Создай таблицы если их нет
+        # Создай таблицы
         db.create_all()
         
-        # Регистрируй blueprints (модули)
+        # Регистрируй blueprints
         from app.auth.routes import auth_bp
         from app.tasks.routes import tasks_bp
         from app.shared.routes import shared_bp
@@ -57,10 +56,27 @@ def create_app(config_name=None):
         # Главная страница
         @app.route('/')
         def index():
-            from flask import redirect, url_for
             from flask_login import current_user
             if current_user.is_authenticated:
                 return redirect(url_for('tasks.task_list'))
             return redirect(url_for('auth.login'))
+
+        
+        # Обработка ошибок
+        @app.errorhandler(404)
+        def not_found_error(error):
+            from flask import render_template
+            return render_template('404.html'), 404
+        
+        @app.errorhandler(500)
+        def internal_error(error):
+            db.session.rollback()
+            from flask import render_template
+            return render_template('500.html'), 500
+        
+        @app.errorhandler(403)
+        def forbidden_error(error):
+            from flask import render_template
+            return render_template('403.html'), 403
     
     return app

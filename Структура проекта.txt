@@ -1,0 +1,39 @@
+todo-list-app/
+├── app/                           # Основное приложение Flask
+│   ├── __init__.py               # Фабрика приложения
+│   ├── config.py                 # Конфигурация
+│   ├── models.py                 # Модели БД (User, Task, SharedTask)
+│   ├── extensions.py             # Расширения (db, login_manager)
+│   │
+│   ├── auth/                     # Модуль авторизации
+│   │   ├── routes.py            # Маршруты (login, register, logout)
+│   │   └── forms.py             # WTForms (LoginForm, RegisterForm)
+│   │
+│   ├── tasks/                    # Модуль работы с задачами
+│   │   ├── routes.py            # CRUD маршруты
+│   │   └── forms.py             # TaskForm
+│   │
+│   ├── shared/                   # Модуль общих задач
+│   │   └── routes.py            # Просмотр по токену
+│   │
+│   ├── statistics/               # Модуль статистики
+│   │   └── routes.py            # Dashboard и API
+│   │
+│   ├── templates/                # HTML шаблоны
+│   │   ├── base.html            # Базовый шаблон
+│   │   ├── auth/                # login.html, register.html
+│   │   ├── tasks/               # task_list.html, create_task.html, etc
+│   │   ├── shared/              # view_shared_task.html
+│   │   └── statistics/          # dashboard.html
+│   │
+│   └── static/                   # Статические файлы
+│       ├── css/style.css        # Основные стили
+│       └── js/
+│           ├── main.js          # Основной JS (AJAX, утилиты)
+│           └── tasks.js         # JS для работы с задачами
+│
+├── .env.example                  # Пример переменных окружения
+├── .gitignore                    # Игнорируемые файлы для Git
+├── requirements.txt              # Зависимости Python
+├── run.py                        # Точка входа приложения
+└── README.md                     # Этот файл
