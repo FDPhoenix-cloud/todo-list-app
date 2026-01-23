@@ -8,8 +8,10 @@ from app.models import Task, SharedTask
 from app.tasks.forms import TaskForm
 import secrets
 
+
 # Создай blueprint
 tasks_bp = Blueprint('tasks', __name__, url_prefix='/tasks')
+
 
 
 @tasks_bp.route('/')
@@ -55,6 +57,7 @@ def task_list():
     )
 
 
+
 @tasks_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_task():
@@ -81,6 +84,7 @@ def create_task():
     return render_template('tasks/create_task.html', form=form)
 
 
+
 @tasks_bp.route('/<int:task_id>')
 @login_required
 def view_task(task_id):
@@ -94,6 +98,7 @@ def view_task(task_id):
         return redirect(url_for('tasks.task_list'))
     
     return render_template('tasks/view_task.html', task=task)
+
 
 
 @tasks_bp.route('/<int:task_id>/edit', methods=['GET', 'POST'])
@@ -130,6 +135,7 @@ def edit_task(task_id):
     return render_template('tasks/edit_task.html', form=form, task=task)
 
 
+
 @tasks_bp.route('/<int:task_id>/delete', methods=['POST'])
 @login_required
 def delete_task(task_id):
@@ -148,6 +154,7 @@ def delete_task(task_id):
     
     flash('🗑️ Задача удалена!', 'success')
     return redirect(url_for('tasks.task_list'))
+
 
 
 @tasks_bp.route('/<int:task_id>/toggle', methods=['POST'])
@@ -170,6 +177,7 @@ def toggle_task(task_id):
         'completed': task.completed,
         'message': '✅ Задача завершена!' if task.completed else '⏳ Задача активирована!'
     })
+
 
 
 @tasks_bp.route('/<int:task_id>/share', methods=['GET', 'POST'])
@@ -210,6 +218,7 @@ def share_task(task_id):
     return render_template('tasks/share_task.html', task=task)
 
 
+
 @tasks_bp.route('/<int:task_id>/unshare', methods=['POST'])
 @login_required
 def unshare_task(task_id):
@@ -229,6 +238,7 @@ def unshare_task(task_id):
         flash('🔒 Общая ссылка удалена!', 'success')
     
     return redirect(url_for('tasks.view_task', task_id=task.id))
+
 
 
 @tasks_bp.errorhandler(404)

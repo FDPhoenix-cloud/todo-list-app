@@ -2,9 +2,11 @@
 Модели базы данных
 """
 from datetime import datetime, timedelta
+import pytz
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
+
 
 
 class User(UserMixin, db.Model):
@@ -22,8 +24,8 @@ class User(UserMixin, db.Model):
     tasks = db.relationship('Task', backref='user', lazy=True, cascade='all, delete-orphan')
     shared_tasks = db.relationship('SharedTask', backref='user', lazy=True, cascade='all, delete-orphan')
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)  # ✅ ИСПРАВЛЕНО: datetime.now вместо datetime.utcnow
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)  # ✅ ИСПРАВЛЕНО
     
     def set_password(self, password):
         """Хеширует и сохраняет пароль"""
@@ -35,7 +37,7 @@ class User(UserMixin, db.Model):
     
     def get_tasks_today(self):
         """Возвращает задачи созданные сегодня"""
-        today = datetime.utcnow().date()
+        today = datetime.now().date()  # ✅ ИСПРАВЛЕНО: datetime.now() вместо datetime.utcnow()
         return Task.query.filter(
             Task.user_id == self.id,
             db.func.date(Task.created_at) == today
@@ -43,15 +45,24 @@ class User(UserMixin, db.Model):
     
     def get_completed_today(self):
         """Возвращает количество завершенных задач сегодня"""
-        today = datetime.utcnow().date()
+        today = datetime.now().date()  # ✅ ИСПРАВЛЕНО: datetime.now() вместо datetime.utcnow()
         return Task.query.filter(
             Task.user_id == self.id,
             Task.completed == True,
             db.func.date(Task.completed_at) == today
         ).count()
     
+    def get_last_7_days(self):
+        """Получить задачи за последние 7 дней"""
+        seven_days_ago = datetime.now() - timedelta(days=7)  # ✅ НОВЫЙ МЕТОД: для статистики
+        return Task.query.filter(
+            Task.user_id == self.id,
+            Task.created_at >= seven_days_ago
+        ).all()
+    
     def __repr__(self):
         return f'<User {self.username}>'
+
 
 
 class Task(db.Model):
@@ -72,15 +83,15 @@ class Task(db.Model):
     # Связь с общей задачей
     shared_task = db.relationship('SharedTask', backref='task', uselist=False, cascade='all, delete-orphan')
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now, index=True)  # ✅ ИСПРАВЛЕНО: datetime.now вместо datetime.utcnow
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)  # ✅ ИСПРАВЛЕНО
     completed_at = db.Column(db.DateTime, nullable=True)
     
     def toggle_complete(self):
         """Переключает статус завершения задачи"""
         self.completed = not self.completed
         if self.completed:
-            self.completed_at = datetime.utcnow()
+            self.completed_at = datetime.now()  # ✅ ИСПРАВЛЕНО: datetime.now() вместо datetime.utcnow()
         else:
             self.completed_at = None
         db.session.commit()
@@ -93,6 +104,7 @@ class Task(db.Model):
     
     def __repr__(self):
         return f'<Task {self.title}>'
+
 
 
 class SharedTask(db.Model):
@@ -113,17 +125,18 @@ class SharedTask(db.Model):
     # Кто может видеть (пусто = все)
     allowed_email = db.Column(db.String(120), nullable=True)  # Опционально ограничение по email
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)  # ✅ ИСПРАВЛЕНО: datetime.now вместо datetime.utcnow
     expires_at = db.Column(db.DateTime, nullable=True)  # Опционально ограничение по времени
     
     def is_expired(self):
         """Проверяет истекла ли ссылка"""
-        if self.expires_at and datetime.utcnow() > self.expires_at:
+        if self.expires_at and datetime.now() > self.expires_at:  # ✅ ИСПРАВЛЕНО: datetime.now() вместо datetime.utcnow()
             return True
         return False
     
     def __repr__(self):
         return f'<SharedTask {self.token}>'
+
 
 
 # Индексы для оптимизации поиска

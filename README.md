@@ -76,7 +76,7 @@
 
 1. **Скачай файлы проекта**
    ```
-   git clone https://github.com/твой-аккаунт/todo-list-app.git
+   git clone https://github.com/FDPhoenix-cloud/todo-list-app.git
    cd todo-list-app
    ```
 
@@ -387,7 +387,8 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ---
 
 ## 👨‍💻 Автор
-
+Прибытков Федор Сергеевич
+Группа - Python419
 Разработано для дипломного проекта.
 
 **Технологии:** Python + Flask + SQLite + Bootstrap + JavaScript
