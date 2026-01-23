@@ -1,5 +1,6 @@
 """
 Маршруты для статистики и аналитики
+Окончательная версия с правильной структурой файлов
 """
 from flask import Blueprint, render_template, jsonify
 from flask_login import login_required, current_user
@@ -17,10 +18,10 @@ statistics_bp = Blueprint('statistics', __name__, url_prefix='/statistics')
 @statistics_bp.route('/dashboard')
 @login_required
 def dashboard():
-    """Дашборд со статистикой"""
+    """Краткий дашборд со статистикой сегодня и неделей"""
     
     # Сегодняшняя статистика (используй datetime.now() вместо datetime.utcnow())
-    today = datetime.now().date()  # ✅ ИСПРАВЛЕНО: datetime.now() вместо datetime.utcnow()
+    today = datetime.now().date()  # ✅ Локальное время
     
     today_tasks = Task.query.filter(
         Task.user_id == current_user.id,
@@ -38,13 +39,7 @@ def dashboard():
     total_completed = Task.query.filter_by(user_id=current_user.id, completed=True).count()
     total_active = total_tasks - total_completed
     
-    # Статистика по приоритетам
-    priority_stats = db.session.query(
-        Task.priority,
-        func.count(Task.id)
-    ).filter_by(user_id=current_user.id).group_by(Task.priority).all()
-    
-    # Последние 7 дней ✅ ИСПРАВЛЕНО: теперь используется правильное локальное время
+    # Последние 7 дней
     week_ago = today - timedelta(days=7)
     week_stats = {}
     
@@ -61,11 +56,9 @@ def dashboard():
         today_tasks=today_tasks,
         today_completed=today_completed,
         total_tasks=total_tasks,
-        total_completed=total_completed,
         total_active=total_active,
-        priority_stats=priority_stats,
         week_stats=week_stats,
-        calculated_at=datetime.now().strftime('%d.%m.%Y %H:%M:%S')  # ✅ ДОБАВЛЕНО: время расчёта
+        calculated_at=datetime.now().strftime('%d.%m.%Y %H:%M:%S')
     )
 
 
@@ -75,7 +68,7 @@ def dashboard():
 def api_daily_stats():
     """API для получения статистики за день (JSON для графиков)"""
     
-    today = datetime.now().date()  # ✅ ИСПРАВЛЕНО: datetime.now() вместо datetime.utcnow()
+    today = datetime.now().date()
     
     stats = {
         'total': Task.query.filter_by(user_id=current_user.id).count(),
@@ -93,7 +86,7 @@ def api_daily_stats():
             Task.completed == True,
             func.date(Task.completed_at) == today
         ).count(),
-        'calculated_at': datetime.now().strftime('%d.%m.%Y %H:%M:%S')  # ✅ ДОБАВЛЕНО: время расчёта
+        'calculated_at': datetime.now().strftime('%d.%m.%Y %H:%M:%S')
     }
     
     return jsonify(stats)
@@ -103,9 +96,9 @@ def api_daily_stats():
 @statistics_bp.route('/api/weekly-stats')
 @login_required
 def api_weekly_stats():
-    """API для недельной статистики - ИСПРАВЛЕНО: используется локальное время"""
+    """API для недельной статистики"""
     
-    today = datetime.now().date()  # ✅ ИСПРАВЛЕНО: datetime.now() вместо datetime.utcnow()
+    today = datetime.now().date()
     week_ago = today - timedelta(days=7)
     
     stats = []
@@ -124,7 +117,7 @@ def api_weekly_stats():
         
         stats.append({
             'date': date.strftime('%d.%m'),
-            'day': ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][date.weekday()],  # ✅ ДОБАВЛЕНО: день недели
+            'day': ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][date.weekday()],
             'created': created,
             'completed': completed
         })
@@ -136,10 +129,10 @@ def api_weekly_stats():
 @statistics_bp.route('/')
 @login_required
 def statistics():
-    """Основная страница статистики с детальной информацией"""
+    """Полная страница статистики с детальной информацией"""
     
     # Получи дату 7 дней назад
-    today = datetime.now().date()  # ✅ Локальное время!
+    today = datetime.now().date()
     last_week = datetime.now() - timedelta(days=7)
     
     # Все задачи за всё время
@@ -151,19 +144,14 @@ def statistics():
     # СТАТИСТИКА ЗА ПОСЛЕДНИЕ 7 ДНЕЙ
     last_7_days_tasks = Task.query.filter(
         Task.user_id == current_user.id,
-        Task.created_at >= last_week  # ✅ Правильное сравнение!
+        Task.created_at >= last_week
     ).all()
     
     last_7_days_total = len(last_7_days_tasks)
     last_7_days_completed = sum(1 for t in last_7_days_tasks if t.completed)
     last_7_days_active = last_7_days_total - last_7_days_completed
     
-    # Статистика по приоритетам
-    high_priority = sum(1 for t in all_tasks if t.priority == 'high')
-    medium_priority = sum(1 for t in all_tasks if t.priority == 'medium')
-    low_priority = sum(1 for t in all_tasks if t.priority == 'low')
-    
-    # За последние 7 дней по приоритетам
+    # Статистика по приоритетам (последние 7 дней)
     last_7_high = sum(1 for t in last_7_days_tasks if t.priority == 'high')
     last_7_medium = sum(1 for t in last_7_days_tasks if t.priority == 'medium')
     last_7_low = sum(1 for t in last_7_days_tasks if t.priority == 'low')
@@ -180,13 +168,14 @@ def statistics():
         ).all()
         
         daily_stats.append({
-            'date': day_date.strftime('%d.%m'),  # Формат: 23.01
+            'date': day_date.strftime('%d.%m'),
             'day_name': ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][day.weekday()],
             'total': len(day_tasks),
             'completed': sum(1 for t in day_tasks if t.completed),
             'active': len(day_tasks) - sum(1 for t in day_tasks if t.completed),
         })
     
+    # ✅ ПРАВИЛЬНЫЙ ШАБЛОН: statistics.html
     return render_template('statistics/statistics.html',
         # Всего задач
         total_tasks=total_tasks,
@@ -197,11 +186,6 @@ def statistics():
         last_7_days_total=last_7_days_total,
         last_7_days_completed=last_7_days_completed,
         last_7_days_active=last_7_days_active,
-        
-        # По приоритетам (всё время)
-        high_priority=high_priority,
-        medium_priority=medium_priority,
-        low_priority=low_priority,
         
         # По приоритетам (последние 7 дней)
         last_7_high=last_7_high,
