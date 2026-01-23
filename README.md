@@ -221,7 +221,8 @@ todo-list-app/
 │   │   ├── shared/
 │   │   │   └── view_shared_task.html
 │   │   └── statistics/
-│   │       └── dashboard.html
+│   │       ├── dashboard.html
+│   │       └── statistics.html
 │   │
 │   └── static/                   # Статические файлы
 │       ├── css/
